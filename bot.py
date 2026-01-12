@@ -184,7 +184,7 @@ async def roulette(ctx, color: str = None, amount: int = 100):
     if accounts[uid]["balance"] < amount:
         await ctx.send(random.choice(TOO_POOR))
         return
-
+    accounts[uid]["balance"] -= amount
     roll = random.randint(1, 15)
     result = "green" if roll == 15 else "black" if roll % 2 == 0 else "red"
 
