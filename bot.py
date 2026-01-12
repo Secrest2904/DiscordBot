@@ -286,15 +286,25 @@ async def adminAbuse(ctx, target: discord.Member = None, amount: int = None):
         await ctx.send("Bots do not need money. They need therapy.")
         return
     
-    accounts = get_account(ctx.author)
+    accounts = load_accounts()
+    uid = str(ctx.author.id)
     tid = str(target.id)
+
+    if uid not in accounts:
+        accounts[uid] = {"name": ctx.author.name, "balance": 1000}
+
+    if tid not in accounts:
+        accounts[tid] = {"name": target.name, "balance": 1000}
+
     accounts[tid]["balance"] += amount
     save_accounts(accounts)
+
     await ctx.send(
-        f"💸 **TRANSFER COMPLETE**\n"
-        f"{ctx.author.name} → {target.name}\n"
+        f"💸 **ADMIN ABUSE SUCCESSFUL**\n"
+        f"{ctx.author.name} blessed {target.name}\n"
         f"Amount: **${amount}**"
     )
+
     
 @bot.command()
 async def hit(ctx):
