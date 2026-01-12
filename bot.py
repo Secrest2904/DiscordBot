@@ -239,12 +239,9 @@ async def blackjack(ctx, amount: int = 100):
     )
 def has_role(member, role_name):
     return any(role.name == role_name for role in member.roles)
+
 @bot.command()
 async def give(ctx, target: discord.Member = None, amount: int = None):
-    if not has_role(ctx.author, "GenkiJi"):
-        await ctx.send("🚫 You are not GenkiJi enough for this power.")
-        return
-
     if not target or amount is None:
         await ctx.send("Usage: `!give @user amount`")
         return
@@ -275,7 +272,30 @@ async def give(ctx, target: discord.Member = None, amount: int = None):
         f"Amount: **${amount}**"
     )
 
-# ───────────────────────
+@bot.command()
+async def adminAbuse(ctx, target: discord.Member = None, amount: int = None):
+    if not has_role(ctx.author, "GenkiJi"):
+        await ctx.send("No")
+        return
+    
+    if not target or amount is None:
+        await ctx.send("Usage: `!adminAbuse @user amount`")
+        return
+
+    if target.bot:
+        await ctx.send("Bots do not need money. They need therapy.")
+        return
+    
+    accounts = get_account(ctx.author)
+    tid = str(target.id)
+    accounts[tid]["balance"] += amount
+    save_accounts(accounts)
+    await ctx.send(
+        f"💸 **TRANSFER COMPLETE**\n"
+        f"{ctx.author.name} → {target.name}\n"
+        f"Amount: **${amount}**"
+    )
+    
 @bot.command()
 async def hit(ctx):
     uid = str(ctx.author.id)
