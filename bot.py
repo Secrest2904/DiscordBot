@@ -22,7 +22,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(BASE_DIR, "accounts.json")
-GENERAL_CHANNEL_NAME = "general"
+GENERAL_CHANNEL_NAME = "casino"
 GUILD_ID = None
 CASINO_CHANNEL_NAME = "casino"
 
