@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import os
 import json
 import random
+import time
 
 # ───────────────────────
 # Setup
@@ -22,7 +23,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(BASE_DIR, "accounts.json")
-GENERAL_CHANNEL_NAME = "casino"
+GENERAL_CHANNEL_NAME = "general"
 GUILD_ID = None
 CASINO_CHANNEL_NAME = "casino"
 
@@ -186,6 +187,8 @@ async def roulette(ctx, color: str = None, amount: int = 100):
         return
     accounts[uid]["balance"] -= amount
     roll = random.randint(1, 15)
+    ctx.send("And the answer isss.....")
+    time.sleep(2)
     result = "green" if roll == 15 else "black" if roll % 2 == 0 else "red"
 
     if color == result:
@@ -193,8 +196,7 @@ async def roulette(ctx, color: str = None, amount: int = 100):
         accounts[uid]["balance"] += winnings
         msg = f"🎉 **{result.upper()}!** You won **${winnings}**"
     else:
-        accounts[uid]["balance"] -= amount
-        msg = f"💀 **{result.upper()}**. You lost **${amount}**"
+        msg = f"**{result.upper()}**. You lost **${amount}**"
 
     save_accounts(accounts)
     await ctx.send(f"{msg}\nBalance: **${accounts[uid]['balance']}**")
@@ -415,10 +417,20 @@ async def on_message(message):
             if GUILD_ID and guild.id != GUILD_ID:
                 continue
 
-            channel = discord.utils.get(guild.text_channels, name=GENERAL_CHANNEL_NAME)
+            channel1 = discord.utils.get(guild.text_channels, name=CASINO_CHANNEL_NAME)
+            channel2 = discord.utils.get(guild.text_channels, name=GENERAL_CHANNEL_NAME)
+            if not channel2:
+                channel2 = channel1
+            content = message.content if message.content else "*[No text]*"
+            if content.startswith("[1]"):
+                content = content[2:]
+                channel = channel2
+            elif content.startswith("[2]"):
+                content = content[2:]
+                channel = channel1
+            else:
+                channel = channel1
             if channel:
-                content = message.content if message.content else "*[No text]*"
-
                 await channel.send(
                     f"{content}"
                 )
