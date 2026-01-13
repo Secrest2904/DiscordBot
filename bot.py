@@ -423,16 +423,17 @@ async def on_message(message):
                 channel2 = channel1
             content = message.content if message.content else "*[No text]*"
             if content.startswith("[1]"):
-                content = content[2:]
+                output = content[3:]
                 channel = channel2
             elif content.startswith("[2]"):
-                content = content[2:]
+                output = content[3:]
                 channel = channel1
             else:
                 channel = channel1
+                output = content
             if channel:
                 await channel.send(
-                    f"{content}"
+                    f"{output}"
                 )
 
                 # Forward attachments
