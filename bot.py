@@ -313,6 +313,11 @@ def getResponse(message):
     elif any(word in lower for word in ["time", "what time is it", "clock", "current time"]):
         current_time = datetime.now().strftime("%H:%M:%S")
         return f"The current time is {current_time}. Not that you have anything important to do with it."
+    else:
+        return random.choice([
+            "Bite me",
+            "Leave me alone"
+        ])
 
 @bot.event
 async def on_message(message):
