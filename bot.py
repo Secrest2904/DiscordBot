@@ -6,7 +6,7 @@ import os
 import json
 import random
 import time
-
+from datetime import datetime
 # ───────────────────────
 # Setup
 # ───────────────────────
@@ -273,6 +273,54 @@ async def give(ctx, target: discord.Member = None, amount: int = None):
         f"{ctx.author.name} → {target.name}\n"
         f"Amount: **${amount}**"
     )
+
+def getResponse(message):
+    lower = message.lower()
+    if any (word in lower for word in ["hello", "hi", "yo", "sup", "hewwo"]):
+        return random.choice([
+            "Hello I guess...",
+            "Oh its you, What do you need this time?",
+            "Lost all your money in the casino?",
+            "Hewwo Pwincess",
+            "Bite me"
+        ])
+    elif "help" in lower:
+        return random.choice([
+            "Help? You mean you can't figure it out on your own? I figured...",
+            "No",
+            "Get a job"
+        ])
+    elif "fuck" in lower:
+        return random.choice([
+            "kys",
+            "bite me",
+            "Make me",
+            "I bet you want to",
+            "Go do your homework or get a job or whatever"
+        ])
+    elif "test" in lower:
+        return random.choice([
+            "Yes I am, unfortunately, here",
+            "Leave me alone",
+            "I am alive... I guess",
+            "Don't trust the crustaceans"
+        ])
+    elif "yourself" in lower:
+        return random.choice([
+            "Bite me",
+            "love yourself <3"
+        ])
+    elif any(word in lower for word in ["time", "what time is it", "clock", "current time"]):
+        current_time = datetime.now().strftime("%H:%M:%S")
+        return f"The current time is {current_time}. Not that you have anything important to do with it."
+
+@bot.event
+async def on_message(message):
+    if message.author.bot:
+        return
+    if bot.user in message.mentions:
+        await message.channel.send(getResponse(message))
+    await bot.process_commands(message)
 
 @bot.command()
 async def adminAbuse(ctx, target: discord.Member = None, amount: int = None):
