@@ -7,6 +7,8 @@ import json
 import random
 import time
 from datetime import datetime
+import asyncio
+
 # ───────────────────────
 # Setup
 # ───────────────────────
@@ -188,7 +190,7 @@ async def roulette(ctx, color: str = None, amount: int = 100):
     accounts[uid]["balance"] -= amount
     roll = random.randint(1, 15)
     ctx.send("And the answer isss.....")
-    time.sleep(2)
+    asyncio.sleep(2)
     result = "green" if roll == 15 else "black" if roll % 2 == 0 else "red"
 
     if color == result:
@@ -318,14 +320,6 @@ def getResponse(message):
             "Bite me",
             "Leave me alone"
         ])
-
-@bot.event
-async def on_message(message):
-    if message.author.bot:
-        return
-    if bot.user in message.mentions:
-        await message.channel.send(getResponse(message.content))
-    await bot.process_commands(message)
 
 @bot.command()
 async def adminAbuse(ctx, target: discord.Member = None, amount: int = None):
@@ -460,11 +454,14 @@ async def pickpocket(ctx, target: discord.Member):
     await ctx.send(msg)
 @bot.event
 async def on_message(message):
-    # Ignore bot messages
     if message.author.bot:
         return
 
-    # If message is a DM
+    # ─── Respond when bot is mentioned ───
+    if bot.user in message.mentions and not isinstance(message.channel, discord.DMChannel):
+        await message.channel.send(getResponse(message.content))
+
+    # ─── DM Relay System ───
     if isinstance(message.channel, discord.DMChannel):
         for guild in bot.guilds:
             if GUILD_ID and guild.id != GUILD_ID:
@@ -474,7 +471,9 @@ async def on_message(message):
             channel2 = discord.utils.get(guild.text_channels, name=GENERAL_CHANNEL_NAME)
             if not channel2:
                 channel2 = channel1
+
             content = message.content if message.content else "*[No text]*"
+
             if content.startswith("[1]"):
                 output = content[3:]
                 channel = channel2
@@ -484,18 +483,15 @@ async def on_message(message):
             else:
                 channel = channel1
                 output = content
-            if channel:
-                await channel.send(
-                    f"{output}"
-                )
 
-                # Forward attachments
+            if channel:
+                await channel.send(output)
+
                 for attachment in message.attachments:
                     await channel.send(attachment.url)
-
                 break
 
-    # IMPORTANT: allows commands to keep working
+    # VERY IMPORTANT — keeps commands working
     await bot.process_commands(message)
 
 # ───────────────────────
