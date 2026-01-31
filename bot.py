@@ -324,7 +324,7 @@ async def on_message(message):
     if message.author.bot:
         return
     if bot.user in message.mentions:
-        await message.channel.send(getResponse(message))
+        await message.channel.send(getResponse(message.content))
     await bot.process_commands(message)
 
 @bot.command()
