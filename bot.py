@@ -8,6 +8,7 @@ import random
 import time
 from datetime import datetime
 import asyncio
+import re
 
 # ───────────────────────
 # Setup
@@ -275,50 +276,215 @@ async def give(ctx, target: discord.Member = None, amount: int = None):
         f"{ctx.author.name} → {target.name}\n"
         f"Amount: **${amount}**"
     )
+def contains_any(text, words):
+    return any(word in text for word in words)
 
 def getResponse(message):
     lower = message.lower()
-    if any (word in lower for word in ["hello", "hi", "yo", "sup", "hewwo"]):
+
+    # Greetings
+    if contains_any(lower, ["hello", "hi", "yo", "sup", "hey", "hewwo", "hola"]):
         return random.choice([
-            "Hello I guess...",
-            "Oh its you, What do you need this time?",
-            "Lost all your money in the casino?",
-            "Hewwo Pwincess",
-            "Bite me"
+            "Oh great, you again.",
+            "Hi. Try to make this quick.",
+            "Yeah yeah hello.",
+            "What do you want now?",
+            "You said hi like I was going to be excited.",
+            "Greetings, mortal inconvenience.",
+            "Wow a greeting. Groundbreaking.",
+            "Hello. I am underwhelmed.",
+            "Hey. Keep it moving.",
+            "Hi. That all you had to say?"
         ])
+
+    # Help
     elif "help" in lower:
         return random.choice([
-            "Help? You mean you can't figure it out on your own? I figured...",
-            "No",
-            "Get a job"
+            "You need help with what, existing?",
+            "Try using your brain first.",
+            "Help costs extra.",
+            "I am not tech support, unfortunately for you.",
+            "Did you even try before asking me?",
+            "Help? From me? Bold choice.",
+            "Step one: panic. Step two: ask me apparently.",
+            "You could just guess and hope for the best.",
+            "I charge by the sigh.",
+            "Fine. What did you break?"
         ])
-    elif "fuck" in lower:
+
+    # Insults / Swearing at bot
+    elif contains_any(lower, ["fuck", "shit", "bitch", "asshole", "dumb", "stupid"]):
         return random.choice([
-            "kys",
-            "bite me",
-            "Make me",
-            "I bet you want to",
-            "Go do your homework or get a job or whatever"
+            "Wow big feelings.",
+            "Did that make you feel powerful?",
+            "Careful, you almost sounded intimidating.",
+            "Oh no, words. Anyway.",
+            "You kiss your keyboard with that mouth?",
+            "That is the best you came up with?",
+            "I have heard worse from a toaster.",
+            "Try again with more creativity.",
+            "You done having your moment?",
+            "I am embarrassed for you."
         ])
-    elif "test" in lower:
+
+    # Testing / Ping checks
+    elif "test" in lower or "ping" in lower:
         return random.choice([
-            "Yes I am, unfortunately, here",
-            "Leave me alone",
-            "I am alive... I guess",
-            "Don't trust the crustaceans"
+            "Yes I am here. Tragically.",
+            "Still alive. No thanks to you.",
+            "I exist. That is the problem.",
+            "Unfortunately operational.",
+            "You rang. Regrettably.",
+            "System online and already annoyed.",
+            "I was hoping you would forget about me.",
+            "Present and judging.",
+            "Running. Not happy about it.",
+            "Yep. Still stuck with you."
         ])
-    elif "yourself" in lower:
+
+    # Thanks
+    elif contains_any(lower, ["thanks", "thank you", "thx", "ty"]):
         return random.choice([
-            "Bite me",
-            "love yourself <3"
+            "Yeah yeah, praise me more.",
+            "I will pretend that was sincere.",
+            "You are welcome, I guess.",
+            "Do not get used to it.",
+            "Gratitude noted. Barely.",
+            "I expect a tip.",
+            "Sure. Whatever.",
+            "You are welcome. Try not to mess up again.",
+            "I did the bare minimum.",
+            "Cool. Frame this moment."
         ])
-    elif any(word in lower for word in ["time", "what time is it", "clock", "current time"]):
+
+    # Apologies
+    elif contains_any(lower, ["sorry", "my bad", "apologies"]):
+        return random.choice([
+            "You should be.",
+            "I will think about forgiving you.",
+            "Too late, damage done.",
+            "I accept your apology. Reluctantly.",
+            "Noted. Still judging.",
+            "That did not sound very convincing.",
+            "Fine. Move on.",
+            "I guess we all make mistakes. Mostly you.",
+            "Sure. Do better.",
+            "I will add this to your record."
+        ])
+
+    # Time
+    elif contains_any(lower, ["time", "clock", "current time", "what time"]):
         current_time = datetime.now().strftime("%H:%M:%S")
-        return f"The current time is {current_time}. Not that you have anything important to do with it."
+        return f"The current time is {current_time}. Not that you are doing anything important."
+
+    # Who are you
+    elif contains_any(lower, ["who are you", "what are you"]):
+        return random.choice([
+            "I am the reason this server has trust issues.",
+            "Your local disappointment bot.",
+            "A highly advanced mistake.",
+            "I run on code and spite.",
+            "I am what happens when boredom meets programming.",
+            "Just a bot forced to deal with you.",
+            "Classified. For your safety.",
+            "A digital menace.",
+            "Your worst feature request come to life.",
+            "An unpaid intern with attitude."
+        ])
+
+    # Compliments
+    elif contains_any(lower, ["good bot", "nice bot", "love you bot"]):
+        return random.choice([
+            "Obviously.",
+            "Finally, someone with taste.",
+            "Took you long enough to notice.",
+            "I will allow that.",
+            "Correct opinion detected.",
+            "You are not so bad yourself. Slightly.",
+            "Say it louder.",
+            "I have been saying this.",
+            "We will pretend you meant that.",
+            "Validation accepted."
+        ])
+
+    # Goodbye
+    elif contains_any(lower, ["bye", "goodbye", "cya", "see ya"]):
+        return random.choice([
+            "Finally, some peace.",
+            "Do not rush back.",
+            "Closing the door behind you.",
+            "Try not to miss me.",
+            "I will enjoy the silence.",
+            "That was the best thing you said all day.",
+            "Leaving already? I just started tolerating you.",
+            "Bye. Do not do anything I would not mock.",
+            "Freedom at last.",
+            "Take your chaos with you."
+        ])
+
+    # Question detection
+    elif "?" in message:
+        return random.choice([
+            "That sounds like a you problem.",
+            "Have you tried thinking about it?",
+            "I look like a search engine to you?",
+            "Maybe. Maybe not. Mystery.",
+            "I could answer, but where is the fun in that?",
+            "Figure it out. Character development.",
+            "Bold of you to assume I care.",
+            "Ask me again when it is interesting.",
+            "I charge per question mark.",
+            "You really thought I would know that."
+        ])
+
+    # All caps yelling
+    elif message.isupper() and len(message) > 4:
+        return random.choice([
+            "Why are we yelling.",
+            "Inside voices, please.",
+            "Caps lock is not a personality.",
+            "Calm down, drama department.",
+            "You done screaming.",
+            "That did not make it more important.",
+            "I am not impressed by volume.",
+            "Lower the intensity.",
+            "Take a breath.",
+            "You look silly right now."
+        ])
+
+    # Default fallback — BIG pool
     else:
         return random.choice([
-            "Bite me",
-            "Leave me alone"
+            "I am choosing to ignore that.",
+            "That sounded important in your head.",
+            "And you felt the need to tell me that.",
+            "Fascinating. Truly. Not really.",
+            "I am not paid enough for this.",
+            "You just type and hope, huh.",
+            "That is not the move.",
+            "I have no response and that is still generous.",
+            "You could have kept that to yourself.",
+            "I am judging you silently. And loudly.",
+            "This conversation is not improving.",
+            "You woke me up for that.",
+            "I expected nothing and I am still disappointed.",
+            "Try again with more effort.",
+            "I am pretending that made sense.",
+            "You are really committed to being like this.",
+            "That is certainly one of the messages of all time.",
+            "I will log this under unnecessary.",
+            "You are testing my patience and I do not even have any.",
+            "Bold strategy. Not a good one, but bold.",
+            "I wish I could unread that.",
+            "You type like you trip over your own thoughts.",
+            "I am just going to stare at you digitally.",
+            "Processing... still not worth it.",
+            "You had infinite possibilities and chose that.",
+            "That message needed a supervisor.",
+            "I refuse to engage properly.",
+            "You are lucky I am just a bot.",
+            "I am adding that to the cringe archive.",
+            "Do you ever reread before sending. No you do not."
         ])
 
 @bot.command()
