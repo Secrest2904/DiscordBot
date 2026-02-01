@@ -283,7 +283,7 @@ def getResponse(message):
     lower = message.lower()
 
     # Greetings
-    if contains_any(lower, ["hello", "hi", "yo", "sup", "hey", "hewwo", "hola"]):
+    if contains_any(lower, ["hello", "hi", "sup", "hey", "hewwo", "hola"]):
         return random.choice([
             "Oh great, you again.",
             "Hi. Try to make this quick.",
@@ -626,6 +626,13 @@ async def on_message(message):
     # ─── Respond when bot is mentioned ───
     if bot.user in message.mentions and not isinstance(message.channel, discord.DMChannel):
         await message.channel.send(getResponse(message.content))
+
+    elif not isinstance(message.channel, discord.DMChannel):
+        if message.attachments and not message.content.strip():
+            return
+
+        if random.randint(0, 5) == 2:
+            await message.channel.send(getResponse(message.content))
 
     # ─── DM Relay System ───
     if isinstance(message.channel, discord.DMChannel):
