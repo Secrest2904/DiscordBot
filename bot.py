@@ -632,7 +632,8 @@ async def on_message(message):
             return
 
         if random.randint(0, 5) == 2:
-            await message.channel.send(getResponse(message.content))
+            if message.channel.name != "quotes":
+                await message.channel.send(getResponse(message.content))
 
     # ─── DM Relay System ───
     if isinstance(message.channel, discord.DMChannel):
