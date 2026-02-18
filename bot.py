@@ -93,9 +93,15 @@ def get_account(user):
     if uid not in accounts:
         accounts[uid] = {
             "name": user.name,
-            "balance": 1000
+            "balance": 1000,
+            "attitude": 0
         }
         save_accounts(accounts)
+    else:
+        if "attitude" not in accounts[uid]:
+            accounts[uid]["attitude"] = 0
+            save_accounts(accounts)
+
 
     return accounts
 
@@ -190,8 +196,8 @@ async def roulette(ctx, color: str = None, amount: int = 100):
         return
     accounts[uid]["balance"] -= amount
     roll = random.randint(1, 15)
-    ctx.send("And the answer isss.....")
-    asyncio.sleep(2)
+    await ctx.send("And the answer isss.....")
+    await asyncio.sleep(2)
     result = "green" if roll == 15 else "black" if roll % 2 == 0 else "red"
 
     if color == result:
@@ -279,8 +285,26 @@ async def give(ctx, target: discord.Member = None, amount: int = None):
 def contains_any(text, words):
     return any(word in text for word in words)
 
-def getResponse(message):
+def getResponse(message, user):
+    accounts = load_accounts()
+    uid = str(user.id)
+
+    if uid in accounts:
+        attitude = accounts[uid].get("attitude", 0)
+    else:
+        attitude = 0
+
     lower = message.lower()
+
+    # NICE OVERRIDE
+    if attitude == "1":
+        return nice_responses(lower)
+
+    # MEAN OVERRIDE
+    #if attitude == "-1":
+    #    return f"{user.mention} {random.choice(TARGETED_INSULTS)}"
+
+    # NORMAL SASS BEHAVIOR BELOW
 
     # Greetings
     if contains_any(lower, ["hello", "hi", "sup", "hey", "hewwo", "hola"]):
@@ -486,6 +510,227 @@ def getResponse(message):
             "I am adding that to the cringe archive.",
             "Do you ever reread before sending. No you do not."
         ])
+BUY_NICE_FLAVOR = [
+    "Took Teto out to dinner for $1000. Teto is now nice to you.",
+    "Bought Teto a limited edition keyboard. She is now emotionally attached to you.",
+    "Funded Teto’s therapy arc. She is now supportive.",
+    "Commissioned fanart of Teto. She is now affectionate.",
+    "Paid for Teto’s caffeine addiction. She feels warm toward you.",
+]
+
+BUY_MEAN_FLAVOR = [
+    "{buyer} spread a rumor about {target} and promoted it for $500.",
+    "{buyer} bribed Teto with gossip about {target}.",
+    "{buyer} funded slander DLC targeting {target}.",
+    "{buyer} purchased premium harassment subscription for {target}.",
+    "{buyer} paid for Teto's villain arc against {target}.",
+]
+TARGETED_INSULTS = [
+    "Nobody asked.",
+    "That’s why your balance is low.",
+    "Log off.",
+    "Even the dealer sighs when you join.",
+    "Skill issue.",
+    "Tragic.",
+    "Embarrassing.",
+]
+
+def nice_responses(message):
+    if contains_any(message, ["hi", "hello", "hey", "sup"]):
+        return random.choice([
+        "Hey, I’m glad you’re here.",
+        "Hi! I was hoping you’d show up.",
+        "Oh good, it’s you.",
+        "Hey hey. What are we getting into today?",
+        "There’s my favorite person."
+    ])
+    elif contains_any(message, ["help", "how", "why", "what do", "confused"]):
+        return "Its ok to be dumb. But yeah I don't know"
+    elif contains_any(message, ["sad", "bad", "hate myself", "i suck", "tired", "lonely"]):
+        return random.choice([
+        "Bad days don’t define you.",
+        "You’re doing better than you think.",
+        "You’re allowed to rest.",
+        "I’m on your side, okay?"
+    ])
+    elif contains_any(message, ["won", "win", "did it", "lets go", "easy", "beat"]):
+        return random.choice([
+        "YES. That’s what I like to hear.",
+        "Knew you had it in you.",
+        "Pop off then.",
+        "Okay champion.",
+        "We love to see it."
+    ])
+    else:
+        return random.choice(NICE_DEFAULT)
+NICE_DEFAULT = [
+    "You’re alright, you know that?",
+    "I respect the energy.",
+    "You’ve got good vibes.",
+    "I’m not mad at that.",
+    "You’re growing on me.",
+    "Lowkey proud of you.",
+    "You’re not as chaotic as usual.",
+    "Solid move.",
+    "10/10 human."
+]
+
+BEG_LINES = [
+    "{user} is a good boy and needs allowance money.",
+    "{user} is financially desperate.",
+    "{user} is on their knees for digital currency.",
+    "{user} just barked for spare change.",
+    "{user} is begging again. Everyone stare.",
+    "{user} has no shame.",
+    "{user} would do this in public.",
+    "{user} typed !beg with confidence.",
+    "{user} has fallen on hard times.",
+    "{user} is asking nicely like a little peasant."
+]
+BEG_LONG = [
+    "{user} just made direct eye contact with Teto while begging. No shame. Zero.",
+    
+    "{user} posted !beg and immediately pretended it was ironic.",
+
+    "{user} said they’d pay it back. They will not.",
+
+    "{user} tried to disguise !beg as a social experiment. It wasn’t.",
+    
+    "{user} typed !beg with the confidence of someone who absolutely should not.",
+    
+    "{user} stared at their balance, sighed deeply, and folded instantly.",
+
+    "{user} called this 'strategic fundraising.'",
+    
+    "{user} looked around to see if anyone noticed. Everyone noticed.",
+    
+    "{user} just demonstrated generational poverty in real time.",
+    
+    "{user} claimed this builds character.",
+
+    "{user} tried to act casual about begging. Nobody bought it.",
+    
+    "{user} is speedrunning financial embarrassment.",
+
+    "{user} described this as 'diversifying revenue streams.'",
+    
+    "{user} called this hustle culture.",
+    
+    "{user} promised this was temporary. It isn’t.",
+    
+    "{user} asked if dignity was refundable.",
+    
+    "{user} performed a dramatic sigh before begging again.",
+
+    "{user} has developed a muscle memory for !beg.",
+    
+    "{user} tried to blame inflation for this.",
+    
+    "{user} typed !beg like they were submitting a job application.",
+    
+    "{user} looked into the distance dramatically before pressing enter.",
+    
+    "{user} tried to look cool doing this. That failed.",
+    
+    "{user} is currently accepting donations and compliments.",
+    
+    "{user} described this as 'community-supported gambling.'",
+    
+    "{user} has monetized embarrassment.",
+    
+    "{user} whispered 'for the bit' but meant it."
+]
+
+
+@bot.command()
+async def beg(ctx):
+    accounts = load_accounts()
+    uid = str(ctx.author.id)
+
+    if uid not in accounts:
+        accounts[uid] = {"balance": 1000, "attitude": 0}
+
+    payout = random.randint(150, 200)
+    accounts[uid]["balance"] += payout
+    save_accounts(accounts)
+
+    # 20% chance for long humiliation
+    if random.random() < 0.2:
+        line = random.choice(BEG_LONG)
+    else:
+        line = random.choice(BEG_LINES)
+
+    await ctx.send(
+        f"{line.format(user=ctx.author.mention)}\n"
+        f"*Teto throws ${payout} at them.*"
+    )
+
+@bot.command()
+async def NSFW(ctx):
+    await ctx.send(
+        f"@everyone {ctx.author.mention} tried using the !NSFW command."
+    )
+
+
+@bot.command()
+async def bribe(ctx):
+    accounts = get_account(ctx.author)
+    uid = str(ctx.author.id)
+
+    if accounts[uid]["balance"] < 1000:
+        await ctx.send(random.choice(TOO_POOR))
+        return
+
+    accounts[uid]["balance"] -= 1000
+    accounts[uid]["attitude"] = 1
+
+    save_accounts(accounts)
+
+    await ctx.send(f"{random.choice(BUY_NICE_FLAVOR)}\n")
+
+
+@bot.command()
+async def slander(ctx, target: discord.Member = None):
+    if not target:
+        await ctx.send("You did it wrong. It's !slander @target")
+        return
+
+    if target.bot:
+        await ctx.send("HOW DARE YOU")
+        return
+
+    accounts = load_accounts()
+    uid = str(ctx.author.id)
+    tid = str(target.id)
+
+    if accounts[uid]["balance"] < 500:
+        await ctx.send(random.choice(TOO_POOR))
+        return
+
+    accounts[uid]["balance"] -= 500
+
+    if tid not in accounts:
+        accounts[tid] = {
+            "name": target.name,
+            "balance": 1000,
+            "attitude": 0
+        }
+
+    if accounts[tid]["attitude"] == 0:
+        await ctx.send(random.choice(TARGETED_INSULTS))
+    accounts[tid]["attitude"] = 0
+
+    save_accounts(accounts)
+
+    flavor = random.choice(BUY_MEAN_FLAVOR).format(
+        buyer=ctx.author.name,
+        target=target.name
+    )
+
+    await ctx.send(
+        f"{flavor}\n"
+    )
+
 
 @bot.command()
 async def adminAbuse(ctx, target: discord.Member = None, amount: int = None):
@@ -583,9 +828,9 @@ async def stand(ctx):
 
 
 OVERWATCH = {
-    "tank": ["Reinhardt", "D.Va", "WINTON", "Sigma", "Orisa", "Zarya", "Wrecking Ball..... or whoever you reroll next", "Roadhog", "Mauga", "Junker Queen", "Hazard", "Doomfist"],
-    "damage": ["Vendetta", "Ashe", "Bastion", "Cassidy", "Echo", "The awesome Genji", "Freja", "Hanzo", "Junkrat", "Sata- I mean Mei", "Pharah in the sky", "Reaper", "Sojourn", "Soldier", "...Sombra", "Symmetra", "TORB TIMEEE", "Tracer", "Venture", "Widowmaker"],
-    "support": ["Ana", "Mercy", "Kiriko", "Lucio", "Baptiste", "Brigitte", "Illiari", "Juno", "Wife Leaver", "Lucio", "Moira", "Zenyatta"],
+    "tank": ["Reinhardt", "D.Va", "WINTON", "Sigma", "Orisa", "Zarya", "Wrecking Ball..... or whoever you reroll next", "Roadhog", "Mauga", "Junker Queen", "Hazard", "Doomfist", "Dommy-I mean Domina"],
+    "damage": ["Vendetta", "Ashe", "Bastion", "Cassidy", "Echo", "The awesome Genji", "Freja", "Hanzo", "Junkrat", "Sata- I mean Mei", "Pharah in the sky", "Reaper", "Sojourn", "Soldier", "...Sombra", "Symmetra", "TORB TIMEEE", "Tracer", "Venture", "Widowmaker", "ANRAN!!", "Emre"],
+    "support": ["Ana", "Mercy", "Kiriko", "Lucio", "Baptiste", "Brigitte", "Illiari", "Juno", "Wife Leaver", "Lucio", "Moira", "Zenyatta", "Jetpack KATTTT", "Mizuki"],
 }
 
 @bot.command()
@@ -608,6 +853,10 @@ async def pickpocket(ctx, target: discord.Member):
 
     uid = str(ctx.author.id)
     tid = str(target.id)
+    if tid not in accounts:
+        accounts[tid] = {"name": target.name, "balance": 1000, "attitude": 0}
+    if uid not in accounts:
+        accounts[uid] = {"name": ctx.author.name, "balance": 1000, "attitude": 0}
 
     if random.random() < 0.3 and accounts[tid]["balance"] >= 100:
         stolen = random.randint(100, 200)
@@ -618,6 +867,8 @@ async def pickpocket(ctx, target: discord.Member):
         msg = "You got caught. Everyone judges you."
 
     await ctx.send(msg)
+    save_accounts()
+
 @bot.event
 async def on_message(message):
     if message.author.bot:
@@ -625,7 +876,7 @@ async def on_message(message):
 
     # ─── Respond when bot is mentioned ───
     if bot.user in message.mentions and not isinstance(message.channel, discord.DMChannel):
-        await message.channel.send(getResponse(message.content))
+        await message.channel.send(getResponse(message.content, message.author))
 
     elif not isinstance(message.channel, discord.DMChannel):
         if message.attachments and not message.content.strip():
@@ -633,7 +884,7 @@ async def on_message(message):
 
         if random.randint(0, 5) == 2:
             if message.channel.name != "quotes":
-                await message.channel.send(getResponse(message.content))
+                await message.channel.send(getResponse(message.content, message.author))
 
     # ─── DM Relay System ───
     if isinstance(message.channel, discord.DMChannel):
