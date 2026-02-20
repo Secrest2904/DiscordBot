@@ -882,7 +882,7 @@ async def on_message(message):
         if message.attachments and not message.content.strip():
             return
 
-        if random.randint(0, 5) == 2:
+        if random.randint(0, 50) == 2:
             if message.channel.name != "quotes":
                 await message.channel.send(getResponse(message.content, message.author))
 
