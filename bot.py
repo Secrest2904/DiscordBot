@@ -30,6 +30,7 @@ GENERAL_CHANNEL_NAME = "general"
 GUILD_ID = None
 CASINO_CHANNEL_NAME = "casino"
 
+active_quote_games = {}
 active_blackjack_games = {}
 
 # ───────────────────────
@@ -94,13 +95,8 @@ def get_account(user):
         accounts[uid] = {
             "name": user.name,
             "balance": 1000,
-            "attitude": 0
         }
         save_accounts(accounts)
-    else:
-        if "attitude" not in accounts[uid]:
-            accounts[uid]["attitude"] = 0
-            save_accounts(accounts)
 
 
     return accounts
@@ -296,44 +292,26 @@ def getResponse(message, user):
 
     lower = message.lower()
 
-    # NICE OVERRIDE
-    if attitude == "1":
-        return nice_responses(lower)
-
-    # MEAN OVERRIDE
-    #if attitude == "-1":
-    #    return f"{user.mention} {random.choice(TARGETED_INSULTS)}"
-
-    # NORMAL SASS BEHAVIOR BELOW
-
     # Greetings
     if contains_any(lower, ["hello", "hi", "sup", "hey", "hewwo", "hola"]):
         return random.choice([
-            "Oh great, you again.",
-            "Hi. Try to make this quick.",
-            "Yeah yeah hello.",
-            "What do you want now?",
-            "You said hi like I was going to be excited.",
-            "Greetings, mortal inconvenience.",
-            "Wow a greeting. Groundbreaking.",
-            "Hello. I am underwhelmed.",
-            "Hey. Keep it moving.",
-            "Hi. That all you had to say?"
+            "Hey there.",
+            "Oh hi. Good to see you.",
+            "Hello hello.",
+            "Hey. What’s going on?",
+            "Hi friend.",
+            "Oh look who showed up.",
+            "Hey! I was getting bored.",
+            "Hi hi.",
+            "Hello human.",
+            "Hey. What chaos are we doing today?"
         ])
 
     # Help
     elif "help" in lower:
         return random.choice([
-            "You need help with what, existing?",
-            "Try using your brain first.",
             "Help costs extra.",
-            "I am not tech support, unfortunately for you.",
-            "Did you even try before asking me?",
-            "Help? From me? Bold choice.",
-            "Step one: panic. Step two: ask me apparently.",
             "You could just guess and hope for the best.",
-            "I charge by the sigh.",
-            "Fine. What did you break?"
         ])
 
     # Insults / Swearing at bot
@@ -355,27 +333,13 @@ def getResponse(message, user):
     elif "test" in lower or "ping" in lower:
         return random.choice([
             "Yes I am here. Tragically.",
-            "Still alive. No thanks to you.",
-            "I exist. That is the problem.",
-            "Unfortunately operational.",
-            "You rang. Regrettably.",
-            "System online and already annoyed.",
-            "I was hoping you would forget about me.",
-            "Present and judging.",
-            "Running. Not happy about it.",
-            "Yep. Still stuck with you."
         ])
 
     # Thanks
     elif contains_any(lower, ["thanks", "thank you", "thx", "ty"]):
         return random.choice([
             "Yeah yeah, praise me more.",
-            "I will pretend that was sincere.",
-            "You are welcome, I guess.",
-            "Do not get used to it.",
-            "Gratitude noted. Barely.",
             "I expect a tip.",
-            "Sure. Whatever.",
             "You are welcome. Try not to mess up again.",
             "I did the bare minimum.",
             "Cool. Frame this moment."
@@ -395,11 +359,6 @@ def getResponse(message, user):
             "Sure. Do better.",
             "I will add this to your record."
         ])
-
-    # Time
-    elif contains_any(lower, ["time", "clock", "current time", "what time"]):
-        current_time = datetime.now().strftime("%H:%M:%S")
-        return f"The current time is {current_time}. Not that you are doing anything important."
 
     # Who are you
     elif contains_any(lower, ["who are you", "what are you"]):
@@ -434,15 +393,7 @@ def getResponse(message, user):
     # Goodbye
     elif contains_any(lower, ["bye", "goodbye", "cya", "see ya"]):
         return random.choice([
-            "Finally, some peace.",
-            "Do not rush back.",
-            "Closing the door behind you.",
             "Try not to miss me.",
-            "I will enjoy the silence.",
-            "That was the best thing you said all day.",
-            "Leaving already? I just started tolerating you.",
-            "Bye. Do not do anything I would not mock.",
-            "Freedom at last.",
             "Take your chaos with you."
         ])
 
@@ -510,21 +461,8 @@ def getResponse(message, user):
             "I am adding that to the cringe archive.",
             "Do you ever reread before sending. No you do not."
         ])
-BUY_NICE_FLAVOR = [
-    "Took Teto out to dinner for $1000. Teto is now nice to you.",
-    "Bought Teto a limited edition keyboard. She is now emotionally attached to you.",
-    "Funded Teto’s therapy arc. She is now supportive.",
-    "Commissioned fanart of Teto. She is now affectionate.",
-    "Paid for Teto’s caffeine addiction. She feels warm toward you.",
-]
 
-BUY_MEAN_FLAVOR = [
-    "{buyer} spread a rumor about {target} and promoted it for $500.",
-    "{buyer} bribed Teto with gossip about {target}.",
-    "{buyer} funded slander DLC targeting {target}.",
-    "{buyer} purchased premium harassment subscription for {target}.",
-    "{buyer} paid for Teto's villain arc against {target}.",
-]
+
 TARGETED_INSULTS = [
     "Nobody asked.",
     "That’s why your balance is low.",
@@ -664,30 +602,6 @@ async def beg(ctx):
         f"{line.format(user=ctx.author.mention)}\n"
         f"*Teto throws ${payout} at them.*"
     )
-
-@bot.command()
-async def NSFW(ctx):
-    await ctx.send(
-        f"@everyone {ctx.author.mention} tried using the !NSFW command."
-    )
-
-
-@bot.command()
-async def bribe(ctx):
-    accounts = get_account(ctx.author)
-    uid = str(ctx.author.id)
-
-    if accounts[uid]["balance"] < 1000:
-        await ctx.send(random.choice(TOO_POOR))
-        return
-
-    accounts[uid]["balance"] -= 1000
-    accounts[uid]["attitude"] = 1
-
-    save_accounts(accounts)
-
-    await ctx.send(f"{random.choice(BUY_NICE_FLAVOR)}\n")
-
 
 @bot.command()
 async def slander(ctx, target: discord.Member = None):
@@ -870,6 +784,55 @@ async def pickpocket(ctx, target: discord.Member):
     save_accounts()
 
 @bot.event
+async def on_reaction_add(reaction, user):
+
+    if user.bot:
+        return
+
+    uid = user.id
+
+    if uid not in active_quote_games:
+        return
+
+    if reaction.message.author != bot.user:
+        return
+
+    emojis = ["1️⃣","2️⃣","3️⃣","4️⃣"]
+
+    if str(reaction.emoji) not in emojis:
+        return
+
+    guess = emojis.index(str(reaction.emoji))
+
+    game = active_quote_games[uid]
+
+    correct = game["answer"]
+    options = game["options"]
+
+    channel = reaction.message.channel
+
+    accounts = get_account(user)
+
+    if guess == correct:
+
+        accounts[str(uid)]["balance"] += 1000
+        save_accounts(accounts)
+
+        await channel.send(
+            f"✅ {user.mention} correct!\n"
+            f"You earned **$1000**."
+        )
+
+    else:
+
+        await channel.send(
+            f"❌ {user.mention} wrong.\n"
+            f"It was **{options[correct]}**."
+        )
+
+    del active_quote_games[uid]
+
+@bot.event
 async def on_message(message):
     if message.author.bot:
         return
@@ -918,6 +881,139 @@ async def on_message(message):
 
     # VERY IMPORTANT — keeps commands working
     await bot.process_commands(message)
+
+
+QUOTES = {
+    "The current president inherits the eagle fursuit from all the former presidents": "Jaden",
+    "Fuck the air fryer (sex)" : "Trent",
+    "I have a secret second family thats french": "Judah",
+    "it slipped out, trust me i love asians": "Jaden",
+    "Touch a child" : "Adam",
+    "First and foremost I blame sonic for me being a furry" : "Jaden",
+    "This is the equivalent of 1 californian being beaten up by 30 midgets" : "Jaden",
+    "Everytime I play support, I wear a shock collar.": "Adam",
+    "All I said was white power" : "Jaden",
+    "What movie did you guys watch? Tommy guys? (Talking about John Wick)" : "Anke",
+    "I have four hands, two of them are invisible and constantly cracking my other two knuckles": "Judah",
+    "Come on, do this meatball makeout with me" : "Judah",
+    "Sorry I am currently murdering a bunch of people": "Adam",
+    "it’s so quiet.. oh i know! jaden’s missing" : "Anke",
+    "yknow how mexico is just america with a piss tint" : "Javier",
+    "Mars is the moon on its period": "Javier",
+    "If they are freely walking around with a fifty inch they deserve it": "Judah",
+    "adam sandler the JEW" : "Trent",
+    "what could have possibly been so fagilicious about the music on femboy tycoon" : "Lurokrim",
+    "this is such fag music dude (While playing femboy tycoon)" : "Javier",
+    "why do i have progress in femboy tycoon?" : "Trent",
+    "What's the point if I can't eat paper": "Jaden",
+    "Have you never heard of penial arthritis?": "Jaden",
+    "its nice that i get to kill without remorse": "Adam",
+    "*flustered emote*" : "Judah",
+    "i’m going to make your asshole real loose and big, i’m going to shove beads in there and rip them out":"Javier",
+    "it didnt let me put rape in.. i was going to  put normal rape but i wanted to spice it up": "Jaden",
+    "why is the dog sitter's face not attached to his tongue": "Anke",
+    "Mario kart wii - Hitlers rein":"Jaden",
+    "I'm going to make you go on your period" : "Adam",
+    "Ass has some good muscles" : "Adam",
+    "torbjorn is going to make me gay": "Trent",
+    "i got really into guilty gear lore- (leaves vc and starts playing guilty gear)": "Jaden",
+    "Wee high, I am the beast that keeps the Green": "Jaden",
+    "stay tune for the future where i am going to be excavating my balls": "Jaden",
+    "may the best rapist win" : "Jaden",
+    "I am furry shades of gay":"Trent",
+    "Walter White's alter ego, Mickey Mouse": "Jaden",
+    "we’re going to have to plan a shooting" : "Anke",
+    "whys your face shit again, oh wait, that's just the color of your skin!" : "Trent",
+    "Not a foot job, I want a paw job" : "Jaden",
+    "(After losing Jaden in Northgate) \"It's like releasing a fish back into the ocean\"": "Trent",
+    "They’re making you wait like a good boy" : "Jaden",
+    "adam you need to stop being black": "Jaden",
+    "I'm going to shove this bowling pin where the sun dont shine" : "Jaden",
+    "I should start maining this character": "Jaden",
+    "I'm over here sniffin torbs pipes":"Jaden",
+    "From cheeks to gooch I am completely soaked":"Jaden",
+    "gta 6 would be out before luke finished the bible, fuck even gta 7":"Jaden",
+    "I've slept with Adam": "Trent",
+    "They had me edging on my seat, or whatever they say" : "Jaden",
+    "would you be down if our horses had sex?" : "Jaden",
+    "he switch to oral too? damn, give me all your gigabytes" : "Jaden",
+    "Just fly in there and crotch goblin them": "Jaden",
+    "a big, fat, JUICY man":"Trent",
+    "this dog is so RACIST":"Trent",
+    "I'm gonna feel you so good":"Trent",
+    "You're are getting double felt" : "Trent",
+    "you owe me a blowjob": "Jaden",
+    "I will touch ALL of these fish": "Jaden",
+    "i got blown up by a giant green penis":"Jaden",
+    " I PRAY, TO BE DIDDIED":"Trent",
+    "you cant rely on potatoes in this era, the british men will come and fuck you":"Jaden",
+    "PDA is too hard to do. Instead, we will use programming skills" :"Adam",
+    "What makes a german man happy is gassing people":"Trent",
+    "I like all the races, the good and the bad ones":"Adam",
+    "I wanna see the femboy lifeweaver skin up against the screen": "Trent",
+    "my balls are quivering in your teeth":"Javier",
+    "Fruits and vegetables, just a bunch of disabled people and gay people":"Jaden",
+    "the bombing of Pearl harbor, the musical":"Trent",
+    "me when the waiter steps on my balls":"Jaden",
+    "She (Hazel the dog) is very mature for her age" : "Javier",
+    "Squirrels make my weiner go hard":"Colt",
+    "a girl without a dick is like an angel without its wings" :"Javier",
+    "i have a weiner in my mouth.. adams german bratwurst":"Colt",
+    "GET THESE BLACKS OUT OF HERE":"Jaden",
+    "Petition to add incest to injury" : "Alex",
+    "moira, it is a gift to have your balls in my face" :"Jaden",
+    "No! Ratf-cker got away! He went to his den. Where he is going to f-ck rats!":"Jaden",
+    "you die the rat or live long enough to become the fucker":"Adam",
+    "if you had parkisons what hero would you play as":"Trent",
+    "I think, therefore I vomit":"Jaden",
+    "im waterboarding my own bed":"Adam",
+    "Do you want to climb into a baguette, ill be inbred":"Adam",
+    "I want my gold fingernails":"Jaden",
+    "except for the casual bdsm known as overwatch":"Trent"
+}
+
+
+@bot.command()
+async def quote(ctx):
+
+    uid = ctx.author.id
+
+    if uid in active_quote_games:
+        await ctx.send("Finish the current quote first.")
+        return
+
+    quote, correct_name = random.choice(list(QUOTES.items()))
+
+    # Collect all unique names
+    all_names = list(set(QUOTES.values()))
+
+    # Remove the correct one so we don't duplicate
+    wrong_pool = [n for n in all_names if n != correct_name]
+
+    # Pick 3 wrong answers
+    wrong = random.sample(wrong_pool, min(3, len(wrong_pool)))
+
+    options = wrong + [correct_name]
+    random.shuffle(options)
+
+    correct_index = options.index(correct_name)
+
+    active_quote_games[uid] = {
+        "answer": correct_index,
+        "options": options
+    }
+
+    msg_text = f"**Who said this?**\n\n\"{quote}\"\n\n"
+
+    for i, name in enumerate(options, start=1):
+        msg_text += f"{i}. {name}\n"
+
+    msg = await ctx.send(msg_text)
+
+    reactions = ["1️⃣","2️⃣","3️⃣","4️⃣"]
+
+    for i in range(len(options)):
+        await msg.add_reaction(reactions[i])
 
 # ───────────────────────
 bot.run(TOKEN, log_handler=handler)
