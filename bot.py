@@ -430,36 +430,18 @@ def getResponse(message, user):
     # Default fallback — BIG pool
     else:
         return random.choice([
-            "I am choosing to ignore that.",
-            "That sounded important in your head.",
-            "And you felt the need to tell me that.",
-            "Fascinating. Truly. Not really.",
-            "I am not paid enough for this.",
-            "You just type and hope, huh.",
-            "That is not the move.",
-            "I have no response and that is still generous.",
-            "You could have kept that to yourself.",
-            "I am judging you silently. And loudly.",
-            "This conversation is not improving.",
-            "You woke me up for that.",
-            "I expected nothing and I am still disappointed.",
-            "Try again with more effort.",
-            "I am pretending that made sense.",
-            "You are really committed to being like this.",
-            "That is certainly one of the messages of all time.",
-            "I will log this under unnecessary.",
-            "You are testing my patience and I do not even have any.",
-            "Bold strategy. Not a good one, but bold.",
-            "I wish I could unread that.",
-            "You type like you trip over your own thoughts.",
-            "I am just going to stare at you digitally.",
-            "Processing... still not worth it.",
-            "You had infinite possibilities and chose that.",
-            "That message needed a supervisor.",
-            "I refuse to engage properly.",
-            "You are lucky I am just a bot.",
-            "I am adding that to the cringe archive.",
-            "Do you ever reread before sending. No you do not."
+            "I’m not entirely sure what’s happening but I support it.",
+            "I’m choosing to trust the process.",
+            "This feels important somehow.",
+            "That message had momentum.",
+            "I feel like we’re building toward something.",
+            "I’m invested now.",
+            "I should probably be concerned but I’m not.",
+            "I’m just going to observe and learn.",
+            "I respect the chaos.",
+            "I support whatever this is becoming.",
+            "This feels like a developing situation.",
+            "I’m emotionally preparing for the next message.",
         ])
 
 
@@ -602,49 +584,6 @@ async def beg(ctx):
         f"{line.format(user=ctx.author.mention)}\n"
         f"*Teto throws ${payout} at them.*"
     )
-
-@bot.command()
-async def slander(ctx, target: discord.Member = None):
-    if not target:
-        await ctx.send("You did it wrong. It's !slander @target")
-        return
-
-    if target.bot:
-        await ctx.send("HOW DARE YOU")
-        return
-
-    accounts = load_accounts()
-    uid = str(ctx.author.id)
-    tid = str(target.id)
-
-    if accounts[uid]["balance"] < 500:
-        await ctx.send(random.choice(TOO_POOR))
-        return
-
-    accounts[uid]["balance"] -= 500
-
-    if tid not in accounts:
-        accounts[tid] = {
-            "name": target.name,
-            "balance": 1000,
-            "attitude": 0
-        }
-
-    if accounts[tid]["attitude"] == 0:
-        await ctx.send(random.choice(TARGETED_INSULTS))
-    accounts[tid]["attitude"] = 0
-
-    save_accounts(accounts)
-
-    flavor = random.choice(BUY_MEAN_FLAVOR).format(
-        buyer=ctx.author.name,
-        target=target.name
-    )
-
-    await ctx.send(
-        f"{flavor}\n"
-    )
-
 
 @bot.command()
 async def adminAbuse(ctx, target: discord.Member = None, amount: int = None):
@@ -845,7 +784,7 @@ async def on_message(message):
         if message.attachments and not message.content.strip():
             return
 
-        if random.randint(0, 50) == 2:
+        if random.randint(0, 80) == 2:
             if message.channel.name != "quotes":
                 await message.channel.send(getResponse(message.content, message.author))
 
