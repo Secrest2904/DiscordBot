@@ -26,8 +26,8 @@ GENERAL_CHANNEL_NAME = "general"
 CASINO_CHANNEL_NAME = "casino"
 GUILD_ID = None
 
-ADMIN_ROLE_NAME = "GenkiJi"
-OWNER_ROLE_NAME = "Miku Fanclub"
+ADMIN_ROLE_NAME = "Miku Fanclub"
+OWNER_ROLE_NAME = "GenkiJi"
 
 active_blackjack_games = {}
 active_quote_games = {}
