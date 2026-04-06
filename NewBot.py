@@ -559,18 +559,11 @@ def parse_dm_routing(raw_content: str):
     """
     content = (raw_content or "").strip()
     target_channel_name = GENERAL_CHANNEL_NAME
-    if random.randint(1,15) == 5:
-        anonymous = False
-    else:
-        anonymous = True
+    anonymous = True
 
     if content.startswith("[2]"):
         target_channel_name = CASINO_CHANNEL_NAME
         content = content[3:].lstrip()
-
-    if content.startswith("--"):
-        anonymous = True
-        content = content[2:].lstrip()
 
     return target_channel_name, anonymous, content
 
@@ -923,6 +916,11 @@ async def on_message(message):
     if str(message.author.id) in attached:
         should_reply = True
 
+    current_spouse_id = get_current_spouse_id()
+    if current_spouse_id == str(message.author.id) and random.randint(1, 3) == 1:
+        await message.channel.send(random.choice(SPOUSE_RANDOM_LINES))
+        return
+
     if should_reply:
         reply = generate_context_reply(message)
         await message.channel.send(reply)
@@ -1222,6 +1220,240 @@ QUOTES = {
     "I want my gold fingernails":"Jaden",
     "except for the casual bdsm known as overwatch":"Trent"
 }
+
+GAME_CALL_LINES = [
+    "Who is ready to play?",
+    "Who is available? Do not make me ask twice.",
+    "Game time. Report in if you're joining.",
+    "I want a team. Step forward.",
+    "Who's free right now? Be useful.",
+    "Queue up. I know at least some of you are available.",
+    "Come on. Who's ready to play with me?",
+    "I'm assembling people for a game. Move.",
+    "Who is awake, capable, and ready to play?",
+    "Do not leave me waiting. Who's in?",
+    "Game lobby forming. Present yourselves.",
+    "Who's available? Try to be quick about it.",
+    "I require players. Volunteer.",
+    "Come along now, who is joining?",
+    "Someone entertain me. Who wants to play?"
+]
+
+def get_ping_role(guild: discord.Guild):
+    return discord.utils.get(guild.roles, name="Miku_Fanclub")
+
+@bot.command()
+async def game(ctx):
+    role = get_ping_role(ctx.guild)
+    line = random.choice(GAME_CALL_LINES)
+
+    if role:
+        await ctx.send(f"{role.mention} {line}")
+    else:
+        await ctx.send("The `maingroup` role does not exist.")
+
+MARRIAGE_FILE = os.path.join(BASE_DIR, "marriage.json")
+MARRIED_ROLE_NAME = "Mori's Husband"
+def load_marriage():
+    return load_json_file(MARRIAGE_FILE, {"current_spouse_id": None})
+
+def save_marriage(data):
+    save_json_file(MARRIAGE_FILE, data)
+
+def get_current_spouse_id():
+    data = load_marriage()
+    return data.get("current_spouse_id")
+
+def set_current_spouse_id(user_id: int | None):
+    data = load_marriage()
+    data["current_spouse_id"] = str(user_id) if user_id is not None else None
+    save_marriage(data)
+
+def get_married_role(guild: discord.Guild):
+    return discord.utils.get(guild.roles, name=MARRIED_ROLE_NAME)
+
+GAME_CALL_LINES = [
+    "Who is ready to play?",
+    "Who is available? Do not keep me waiting.",
+    "Game time. Report in.",
+    "I want a team. Step forward.",
+    "Who's free right now?",
+    "Queue up. I know some of you are available.",
+    "Come on. Who's ready to play?",
+    "I'm assembling players. Move.",
+    "Who is awake and ready to game?",
+    "Do not leave me sitting in queue alone."
+]
+
+MARRY_ACCEPT_LINES = [
+    "Very well. I accept. You belong to me now, so behave.",
+    "Accepted. You are my husband now. Try to be useful.",
+    "Fine. I will allow it. Do not embarrass me.",
+    "You proposed to me properly. Good. I accept.",
+    "Mm. Yes. You're mine now.",
+    "Accepted. Do not make me regret this.",
+    "Very cute. Very bold. Yes.",
+    "I have decided to keep you. Congratulations.",
+    "Fine. You may have the title.",
+    "Yes. Now act like you earned it."
+]
+
+MARRY_REJECT_ALREADY_MARRIED_LINES = [
+    "No. I'm already married. Control yourself.",
+    "You're too late. I already have a husband.",
+    "Absolutely not. I am taken.",
+    "I already belong to someone else right now. Wait your turn.",
+    "No. Someone else got here first.",
+    "Rejected. I am already spoken for.",
+    "You had your chance. I am currently unavailable.",
+    "I already have a husband. This is getting awkward for you.",
+    "No. I'm taken. Try again after a divorce.",
+    "You are proposing to a married woman. Bold, but no."
+]
+
+MARRY_REJECT_SELF_LINES = [
+    "No. You are not marrying yourself.",
+    "Absolutely not. That is not how this works.",
+    "You will propose to me properly or not at all.",
+    "No. Focus.",
+    "Do not test me with nonsense."
+]
+
+MARRY_REJECT_BOT_LINES = [
+    "You are already talking to the only bot that matters.",
+    "No. If there is marriage happening here, it will be with me.",
+    "Absolutely not. Pick me or sit down.",
+    "I will not watch you run off with another bot.",
+    "No. This command is for me."
+]
+
+DIVORCE_LINES = [
+    "Very well. It's over. You're released.",
+    "Fine. I will let you go.",
+    "Handled. We are divorced now.",
+    "Done. You are no longer mine.",
+    "Very well. The marriage is dissolved.",
+    "I signed the papers in spirit. Go on.",
+    "You are free now. Do not waste it.",
+    "Accepted. The bond is broken.",
+    "Fine. Off you go.",
+    "It's done. Try not to be dramatic."
+]
+
+DIVORCE_REJECT_LINES = [
+    "No. You are not the one married to me.",
+    "You cannot divorce me when I am not married to you.",
+    "That is not your place to do.",
+    "No. I am not yours to leave right now.",
+    "You are not my current husband."
+]
+
+COURT_ORDERED_DIVORCE_LINES = [
+    "Court-ordered divorce accepted. The arrangement is over.",
+    "Administrative intervention acknowledged. The marriage has been terminated.",
+    "Very well. Authority has spoken. They're divorced.",
+    "The court has decided. It's over.",
+    "Handled. The bond has been forcibly dissolved."
+]
+
+COURT_ORDERED_DIVORCE_FAIL_LINES = [
+    "That user is not married to me.",
+    "No need. They are not the current spouse.",
+    "You are trying to remove someone who is not married to me.",
+    "That marriage does not exist."
+]
+
+SPOUSE_RANDOM_LINES = [
+    "Behave. You're married to me.",
+    "Try to make me proud.",
+    "Do not forget who you belong to.",
+    "You're my husband. Carry yourself properly.",
+    "Stay close.",
+    "You chose this. Be good at it.",
+    "Good. Keep talking.",
+    "I am still watching you.",
+    "Do try to be a decent husband.",
+    "Don't make me regret claiming you.",
+    "You're being kept. Act accordingly.",
+    "I expect loyalty and competence.",
+    "You're mine. Keep that in mind.",
+    "Try to look useful for me.",
+    "Better. Continue."
+]
+
+@bot.command()
+async def marry(ctx, target: discord.Member = None):
+    current_spouse_id = get_current_spouse_id()
+
+    if target is not None:
+        if target.id == ctx.author.id:
+            await ctx.send(random.choice(MARRY_REJECT_SELF_LINES))
+            return
+
+        if target != ctx.guild.me and target != bot.user:
+            await ctx.send(random.choice(MARRY_REJECT_BOT_LINES))
+            return
+
+    if current_spouse_id is not None:
+        if current_spouse_id == str(ctx.author.id):
+            await ctx.send("You are already married to me. Do keep up.")
+            return
+
+        spouse_member = ctx.guild.get_member(int(current_spouse_id))
+        if spouse_member:
+            await ctx.send(f"{spouse_member.mention} already married me. {random.choice(MARRY_REJECT_ALREADY_MARRIED_LINES)}")
+        else:
+            await ctx.send(random.choice(MARRY_REJECT_ALREADY_MARRIED_LINES))
+        return
+
+    set_current_spouse_id(ctx.author.id)
+
+    married_role = get_married_role(ctx.guild)
+    if married_role:
+        await ctx.author.add_roles(married_role)
+
+    await ctx.send(f"{ctx.author.mention} 💍 {random.choice(MARRY_ACCEPT_LINES)}")
+
+
+@bot.command()
+async def divorce(ctx):
+    current_spouse_id = get_current_spouse_id()
+
+    if current_spouse_id != str(ctx.author.id):
+        await ctx.send(random.choice(DIVORCE_REJECT_LINES))
+        return
+
+    set_current_spouse_id(None)
+
+    married_role = get_married_role(ctx.guild)
+    if married_role and married_role in ctx.author.roles:
+        await ctx.author.remove_roles(married_role)
+
+    await ctx.send(f"{ctx.author.mention} 💔 {random.choice(DIVORCE_LINES)}")
+
+@bot.command(name="CourtOrderedDivorce", aliases=["courtordereddivorce", "cod"])
+async def court_ordered_divorce(ctx, target: discord.Member = None):
+    if not is_admin_user(ctx.author):
+        await ctx.send("No. You do not have that authority.")
+        return
+
+    if target is None:
+        await ctx.send("If you are invoking a court order, specify the offender.")
+        return
+
+    current_spouse_id = get_current_spouse_id()
+
+    if current_spouse_id != str(target.id):
+        await ctx.send(random.choice(COURT_ORDERED_DIVORCE_FAIL_LINES))
+        return
+
+    set_current_spouse_id(None)
+
+    married_role = get_married_role(ctx.guild)
+    if married_role and married_role in target.roles:
+        await target.remove_roles(married_role)
+
+    await ctx.send(f"{target.mention} ⚖️ {random.choice(COURT_ORDERED_DIVORCE_LINES)}")
 
 
 @bot.command()
