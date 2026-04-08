@@ -1244,13 +1244,13 @@ def get_ping_role(guild: discord.Guild):
 
 @bot.command()
 async def game(ctx):
-    role = get_ping_role(ctx.guild)
+    role = ADMIN_ROLE_NAME
     line = random.choice(GAME_CALL_LINES)
 
     if role:
         await ctx.send(f"{role.mention} {line}")
     else:
-        await ctx.send("The `maingroup` role does not exist.")
+        await ctx.send("The `Miku Fanclub` role does not exist.")
 
 MARRIAGE_FILE = os.path.join(BASE_DIR, "marriage.json")
 MARRIED_ROLE_NAME = "Mori's Husband"
