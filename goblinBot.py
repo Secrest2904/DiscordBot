@@ -38,6 +38,11 @@ active_shops = {}
 # keeps saved timestamps predictable even on Windows hosts without tzdata.
 PST = timezone(timedelta(hours=-8), name="PST")
 SHOP_REACTIONS = ["1️⃣", "2️⃣", "3️⃣", "4️⃣"]
+GENERAL_AUTO_REPLY_CHANCE = 0.08
+CASINO_AUTO_REPLY_CHANCE = 0.45
+OTHER_AUTO_REPLY_CHANCE = 0.18
+MARRIAGE_PROPOSAL_COST = 2000
+BRIBE_DIVORCE_COST = 10000
 
 # ───────────────────────
 # Persistence helpers
@@ -105,6 +110,18 @@ def ensure_account(accounts, user):
     account.setdefault("last_gambling_loss", None)
     return account
 
+def charge_user(user, amount):
+    """Deduct a fixed command fee atomically; return (charged, balance)."""
+    accounts = load_accounts()
+    account = ensure_account(accounts, user)
+    clean_inventory(account)
+    if account["balance"] < amount:
+        save_accounts(accounts)
+        return False, account["balance"]
+    account["balance"] -= amount
+    save_accounts(accounts)
+    return True, account["balance"]
+
 def pst_now():
     return datetime.now(PST)
 
@@ -152,6 +169,14 @@ def is_owner_user(member: discord.Member) -> bool:
 
 def in_casino(ctx):
     return ctx.channel.name == CASINO_CHANNEL_NAME or ctx.author.guild_permissions.administrator
+
+def auto_reply_chance(channel):
+    channel_name = getattr(channel, "name", "")
+    if channel_name == GENERAL_CHANNEL_NAME:
+        return GENERAL_AUTO_REPLY_CHANCE
+    if channel_name == CASINO_CHANNEL_NAME:
+        return CASINO_AUTO_REPLY_CHANCE
+    return OTHER_AUTO_REPLY_CHANCE
 
 # ───────────────────────
 # Blackjack utilities
@@ -576,7 +601,7 @@ DEFAULT_REPLIES = [
     "You ever find a fry on the ground? Great day when that happens.",
     "I'm nodding like I understand all of it.", "No complaints from me.",
     "That seems like a tomorrow problem.", "Alright, friend.",
-    "I can work with that. Not actual work, but you know.",
+    "A girl's gotta make rent. Talking is free, though.",
     "Good enough for goblin business.", "I hear ya.",
     "Keep talking. It makes the room less quiet.", "Yeah. Life's funny like that."
 ]
@@ -584,7 +609,7 @@ DEFAULT_REPLIES = [
 HELLO_REPLIES = [
     "Oh, hey. Didn't hear you come in.", "Hi. You got snacks, or just news?",
     "Hey there. Mind the sack.", "Oh good, company.",
-    "Hello. I was just doing regular legal goblin stuff.",
+    "Hello from your local mostly-legal goblin girl.",
     "Hey. If you see a loose coin, that's mine.", "Morning, evening, whatever it is. Hi."
 ]
 
@@ -638,7 +663,7 @@ EXCITED_REPLIES = [
 
 PING_REPLIES = [
     "Yeah?", "Oh. Me?", "I'm here. Behind the sack.", "What's up?",
-    "Hang on, I dropped a coin.", "You called the goblin?", "Yep. Still around."
+    "Hang on, I dropped a coin.", "You called the goblin girl?", "Yep. Still around."
 ]
 
 OWNER_REFLECT_REPLIES = [
@@ -740,7 +765,7 @@ COMPLIMENT_REPLIES = [
     "Me? Aw. I just washed this shirt last month.", "Thanks. The nose is natural.",
     "That's kind of you. I don't hear that much outside pawn shops.", "Really? Huh. I'll remember this all week.",
     "You're pretty alright yourself.", "Thanks, friend. That's better than money. Slightly.",
-    "I knew this vest had potential.", "Aw, quit it. Actually, one more is fine."
+    "This goblin girl cleans up alright.", "Aw, quit it. Actually, one more is fine."
 ]
 
 DEATH_REPLIES = [
@@ -758,7 +783,7 @@ MUSIC_REPLIES = [
 ]
 
 MONEY_REPLIES = [
-    "Money? Yeah, I think about it a normal amount. Constantly.", "Coins are easier. Bills get crumpled in the sack.",
+    "Money? Yeah, a girl's gotta make rent somehow.", "Coins are easier. Bills get crumpled in the sack.",
     "I'm saving up for a smaller sack.", "Casino money spends the same, assuming you keep it.",
     "If you're broke, `!beg` works. I won't make it weird.", "We could work. Not my first choice, but we could.",
     "I got financial plans. None survived contact with lunch.", "A dollar is just a hundred little opportunities."
@@ -1042,7 +1067,7 @@ ITEM_CATALOG = {
     },
     "collar": {
         "name": "Coin-Purse Strap", "kind": "collar", "weight": 5,
-        "price": 0.38, "description": "Let the goblin loop it onto you: +50% begging, constant company, and occasional command mix-ups today.",
+        "price": 0.38, "description": "Let the goblin girl loop it onto you: +50% begging, extra company, and occasional command mix-ups today.",
         "legendary_description": "Double begging and more frequent command mix-ups for three days.",
         "value": 0.50, "legendary_value": 1.00,
     },
@@ -1313,7 +1338,7 @@ async def shop(ctx):
     clean_inventory(account)
     offers = build_shop_offers(account["balance"])
 
-    lines = [f"**Goblin's Blanket Shop — {pst_now().strftime('%I:%M %p PST')}**", "React with the number you want. Prices are based on your wallet and my rent situation.", ""]
+    lines = [f"**Goblin Girl's Blanket Shop — {pst_now().strftime('%I:%M %p PST')}**", "React with the number you want. Prices are based on your wallet and my rent situation.", ""]
     for index, offer in enumerate(offers, start=1):
         data = ITEM_CATALOG[offer["id"]]
         title = f"LEGENDARY {data['name']}" if offer["legendary"] else data["name"]
@@ -1680,18 +1705,28 @@ async def detach(ctx, target: discord.Member = None):
 # Extra fun commands from old bot
 # ───────────────────────
 TOO_POOR = [
-    "Not enough money. Been there.",
-    "Your wallet came up a little short.",
-    "Can't cover that one yet. Maybe check the couch.",
-    "Balance says no, but not in a mean way.",
-    "Short on funds. I got a jar you can stare into if that helps."
+    "Not enough money. Try `!work` over in **#casino** and build the pile back up.",
+    "Your wallet came up short. **#casino** has `!work` if you need reliable coins.",
+    "Can't cover that one yet. Head to **#casino**, use `!work`, then come back richer.",
+    "Balance says no. The goblin girl recommends earning a little in **#casino**.",
+    "Short on funds, friend. `!work` in **#casino** pays better than staring into my jar."
+]
+
+CASINO_AD_LINES = [
+    "Need coins? Visit **#casino** and try `!work`.",
+    "While you're regrouping, **#casino** has roulette, blackjack, and honest little `!work` wages.",
+    "The goblin girl keeps the money-making commands over in **#casino**.",
+    "A quick `!work` in **#casino** might fund the next attempt.",
+    "Come by **#casino**—earn safely with `!work`, then lose it creatively if you want.",
+    "Financial recovery plan: **#casino**, then `!work`, then maybe blackjack.",
+    "If the command failed because life is expensive, **#casino** is open.",
 ]
 
 INVALID_COLOR = [
-    "Roulette's got red, black, or green. Those are the paints we could afford.",
-    "Try red, black, or green.",
-    "That color isn't on this wheel. Might be on a nicer wheel.",
-    "Red, black, or green, friend."
+    "Roulette's got red, black, or green. Try again—or earn safely with `!work` here in **#casino**.",
+    "Try red, black, or green. If colors are being difficult, **#casino** also has blackjack.",
+    "That color isn't on this wheel. `!work` in **#casino** is much less picky.",
+    "Red, black, or green, friend. Plenty of other money commands live in **#casino** too."
 ]
 
 BLACKJACK_LINES = [
@@ -1769,7 +1804,7 @@ async def on_message(message):
         save_accounts(accounts)
 
     # The jingling coin-purse strap can distract the goblin before command
-    # dispatch. Begging is always easy for him to recognize.
+    # dispatch. Begging is always easy for her to recognize.
     if collars and message.content.startswith(bot.command_prefix):
         command_name = message.content[len(bot.command_prefix):].split(maxsplit=1)[0].lower()
         block_chance = 0.50 if collars[0].get("legendary") else (1 / 3)
@@ -1791,9 +1826,11 @@ async def on_message(message):
     # Let commands go through first
     await bot.process_commands(message)
 
+    reply_chance = auto_reply_chance(message.channel)
+
     # Ignore command messages for auto-replies
     if message.content.startswith(bot.command_prefix):
-        if collars:
+        if collars and random.random() < reply_chance:
             await message.channel.send(random.choice([
                 "Got it that time. Strap only jingled a little.",
                 "Command heard and mostly understood.",
@@ -1804,8 +1841,9 @@ async def on_message(message):
 
     should_reply = False
 
-    # Guaranteed reply if bot is pinged
-    if bot.user in message.mentions:
+    # Direct pings remain guaranteed regardless of channel throttling.
+    was_pinged = bot.user in message.mentions
+    if was_pinged:
         should_reply = True
 
     # Reply if user is attached
@@ -1827,27 +1865,56 @@ async def on_message(message):
         should_reply = True
 
     current_spouse_id = get_current_spouse_id()
-    if current_spouse_id == str(message.author.id) and random.randint(1, 3) == 1:
+    spouse_triggered = current_spouse_id == str(message.author.id) and random.randint(1, 3) == 1
+    if spouse_triggered and (was_pinged or random.random() < reply_chance):
         await message.channel.send(generate_spouse_reply(message.content))
         return
 
-    if should_reply:
+    if should_reply and (was_pinged or random.random() < reply_chance):
         reply = generate_context_reply(message)
         await message.channel.send(reply)
+
+@bot.event
+async def on_command_error(ctx, error):
+    if ctx.command and ctx.command.has_error_handler():
+        return
+
+    fee_note = ""
+    attempted_command = (ctx.invoked_with or "").lower()
+    if attempted_command == "marry" and isinstance(error, commands.UserInputError):
+        charged, balance = charge_user(ctx.author, MARRIAGE_PROPOSAL_COST)
+        if charged:
+            fee_note = f"\nThe failed proposal still used the **${MARRIAGE_PROPOSAL_COST:,}** nonrefundable filing fee. Balance: **${balance:,}**."
+        else:
+            fee_note = f"\nThe marriage filing fee is **${MARRIAGE_PROPOSAL_COST:,}**, but you only have **${balance:,}**. Nothing was charged."
+
+    if isinstance(error, commands.CommandNotFound):
+        problem = "I don't have that command written on the board. Might've been a typo."
+    elif isinstance(error, commands.MissingRequiredArgument):
+        problem = f"That command is missing `{error.param.name}`. The goblin girl needs the whole form."
+    elif isinstance(error, commands.BadArgument):
+        problem = "I couldn't understand one of those command arguments. Check the amount or @mention and try again."
+    elif isinstance(error, commands.UserInputError):
+        problem = "That command got tangled up in its inputs. Give the format another look."
+    else:
+        print(f"COMMAND ERROR ({getattr(ctx.command, 'qualified_name', 'unknown')}): {error}")
+        problem = "That command tripped over something behind the counter. Sorry, friend."
+
+    await ctx.send(f"{problem}{fee_note}\n{random.choice(CASINO_AD_LINES)}")
 
 
 @bot.command()
 async def give(ctx, target: discord.Member = None, amount: int = None):
     if not target or amount is None:
-        await ctx.send("Usage: `!give @user amount`")
+        await ctx.send(f"Usage: `!give @user amount`\n{random.choice(CASINO_AD_LINES)}")
         return
 
     if target.bot:
-        await ctx.send("Bots don't buy things. I tried selling one a button once.")
+        await ctx.send(f"Bots don't buy things. I tried selling one a button once.\n{random.choice(CASINO_AD_LINES)}")
         return
 
     if amount <= 0:
-        await ctx.send("Negative giving is just taking. Different command, different paperwork.")
+        await ctx.send(f"Negative giving is just taking. Different command, different paperwork.\n{random.choice(CASINO_AD_LINES)}")
         return
 
     accounts = load_accounts()
@@ -2141,7 +2208,8 @@ async def on_reaction_add(reaction, user):
             return
         if account["balance"] < offer["price"]:
             await reaction.message.channel.send(
-                f"{user.mention}, that's **${offer['price']:,}** and you've got **${account['balance']:,}**. I can keep it on the blanket while you earn more."
+                f"{user.mention}, that's **${offer['price']:,}** and you've got **${account['balance']:,}**. "
+                "Try `!work` in **#casino**, then come check the blanket again."
             )
             return
 
@@ -2516,14 +2584,14 @@ SPOUSE_GREETING_LINES = [
 # and somebody to help carry the sack—not ownership or a power struggle.
 MARRY_ACCEPT_LINES = [
     "Sure. Yeah, that sounds nice. Wanna split rent and snacks?",
-    "Marriage? Alright. I already like having you around.",
+    "Marriage? Alright. This goblin girl already likes having you around.",
     "Yeah, okay. We can make it official. I got a ring-shaped washer somewhere.",
     "I'd like that. Nothing fancy, though—paperwork and fries is plenty.",
     "Sure thing. Guess this is our sack now.",
     "Aw, really? Yeah. Absolutely. Lemme clean off the good washer.",
     "Sounds good to me. Partners in life and low-cost errands.",
     "Yeah, let's do it. I could use somebody to remind me where I put stuff.",
-    "I accept. Hope you're okay with a very modest honeymoon.",
+    "I accept. Your new goblin wife hopes you're okay with a very modest honeymoon.",
     "Sure. You, me, and whatever loose change we find along the way."
 ]
 
@@ -2594,7 +2662,7 @@ SPOUSE_RANDOM_LINES = [
     "Glad we got married. Makes errands less boring.", "If you see my keys, they're technically our keys now.",
     "You good over there, spouse?", "I put your name on the snack shelf.",
     "Shared finances remain a terrifying concept, but I trust you.", "Come sit. I found a chair with most of its legs.",
-    "We're a decent little household, huh?"
+    "We're a decent little household, huh?", "Your goblin wife found a coupon. Date night might be back on."
 ]
 
 SPOUSE_AFFECTION_LINES = [
@@ -2660,27 +2728,37 @@ def generate_spouse_reply(content):
 
 @bot.command()
 async def marry(ctx, target: discord.Member = None):
+    charged, balance = charge_user(ctx.author, MARRIAGE_PROPOSAL_COST)
+    if not charged:
+        await ctx.send(
+            f"Marriage paperwork costs **${MARRIAGE_PROPOSAL_COST:,}**, but you've only got **${balance:,}**. Nothing was charged.\n"
+            f"{random.choice(CASINO_AD_LINES)}"
+        )
+        return
+
+    fee_note = f"\n*Nonrefundable proposal filing fee: **${MARRIAGE_PROPOSAL_COST:,}**. Balance: **${balance:,}**.*"
+    failed_fee_note = f"{fee_note}\n{random.choice(CASINO_AD_LINES)}"
     current_spouse_id = get_current_spouse_id()
 
     if target is not None:
         if target.id == ctx.author.id:
-            await ctx.send(random.choice(MARRY_REJECT_SELF_LINES))
+            await ctx.send(f"{random.choice(MARRY_REJECT_SELF_LINES)}{failed_fee_note}")
             return
 
         if target != ctx.guild.me and target != bot.user:
-            await ctx.send(random.choice(MARRY_REJECT_BOT_LINES))
+            await ctx.send(f"{random.choice(MARRY_REJECT_BOT_LINES)}{failed_fee_note}")
             return
 
     if current_spouse_id is not None:
         if current_spouse_id == str(ctx.author.id):
-            await ctx.send("We're already married, spouse. The washer ring and everything.")
+            await ctx.send(f"We're already married, spouse. The washer ring and everything.{failed_fee_note}")
             return
 
         spouse_member = ctx.guild.get_member(int(current_spouse_id))
         if spouse_member:
-            await ctx.send(f"{spouse_member.mention} already married me. {random.choice(MARRY_REJECT_ALREADY_MARRIED_LINES)}")
+            await ctx.send(f"{spouse_member.mention} already married me. {random.choice(MARRY_REJECT_ALREADY_MARRIED_LINES)}{failed_fee_note}")
         else:
-            await ctx.send(random.choice(MARRY_REJECT_ALREADY_MARRIED_LINES))
+            await ctx.send(f"{random.choice(MARRY_REJECT_ALREADY_MARRIED_LINES)}{failed_fee_note}")
         return
 
     set_current_spouse_id(ctx.author.id)
@@ -2689,7 +2767,7 @@ async def marry(ctx, target: discord.Member = None):
     if married_role:
         await ctx.author.add_roles(married_role)
 
-    await ctx.send(f"{ctx.author.mention} 💍 {random.choice(MARRY_ACCEPT_LINES)}")
+    await ctx.send(f"{ctx.author.mention} 💍 {random.choice(MARRY_ACCEPT_LINES)}{fee_note}")
 
 @bot.command(name="autoMarry", aliases=["automarry", "forceMarry", "forcemarry"])
 async def auto_marry(ctx, target: discord.Member = None):
@@ -2728,7 +2806,7 @@ async def divorce(ctx):
     current_spouse_id = get_current_spouse_id()
 
     if current_spouse_id != str(ctx.author.id):
-        await ctx.send(random.choice(DIVORCE_REJECT_LINES))
+        await ctx.send(f"{random.choice(DIVORCE_REJECT_LINES)}\n{random.choice(CASINO_AD_LINES)}")
         return
 
     set_current_spouse_id(None)
@@ -2738,6 +2816,35 @@ async def divorce(ctx):
         await ctx.author.remove_roles(married_role)
 
     await ctx.send(f"{ctx.author.mention} 💔 {random.choice(DIVORCE_LINES)}")
+
+@bot.command(name="BribeDivorce", aliases=["bribedivorce", "bribeDivorce"])
+async def bribe_divorce(ctx):
+    current_spouse_id = get_current_spouse_id()
+    if current_spouse_id is None:
+        await ctx.send(f"Nobody's married to the goblin girl right now, so keep your bribe money.\n{random.choice(CASINO_AD_LINES)}")
+        return
+
+    charged, balance = charge_user(ctx.author, BRIBE_DIVORCE_COST)
+    if not charged:
+        await ctx.send(
+            f"Breaking up somebody else's marriage costs **${BRIBE_DIVORCE_COST:,}**, and you've got **${balance:,}**. Nothing was charged.\n"
+            f"{random.choice(CASINO_AD_LINES)}"
+        )
+        return
+
+    spouse_member = ctx.guild.get_member(int(current_spouse_id))
+    set_current_spouse_id(None)
+
+    married_role = get_married_role(ctx.guild)
+    if spouse_member and married_role and married_role in spouse_member.roles:
+        await spouse_member.remove_roles(married_role)
+
+    former_spouse = spouse_member.mention if spouse_member else "the current spouse"
+    await ctx.send(
+        f"{ctx.author.mention} slides **${BRIBE_DIVORCE_COST:,}** across the blanket. "
+        f"The goblin girl checks both directions, pockets it, and dissolves her marriage to {former_spouse}.\n"
+        f"*Bribe paid. Balance: **${balance:,}**.*"
+    )
 
 @bot.command(name="CourtOrderedDivorce", aliases=["courtordereddivorce", "cod"])
 async def court_ordered_divorce(ctx, target: discord.Member = None):
