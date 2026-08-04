@@ -601,7 +601,7 @@ DEFAULT_REPLIES = [
     "You ever find a fry on the ground? Great day when that happens.",
     "I'm nodding like I understand all of it.", "No complaints from me.",
     "That seems like a tomorrow problem.", "Alright, friend.",
-    "A girl's gotta make rent. Talking is free, though.",
+    "A goblin's gotta make rent. Talking is free, though.",
     "Good enough for goblin business.", "I hear ya.",
     "Keep talking. It makes the room less quiet.", "Yeah. Life's funny like that."
 ]
@@ -609,7 +609,7 @@ DEFAULT_REPLIES = [
 HELLO_REPLIES = [
     "Oh, hey. Didn't hear you come in.", "Hi. You got snacks, or just news?",
     "Hey there. Mind the sack.", "Oh good, company.",
-    "Hello from your local mostly-legal goblin girl.",
+    "Hello from your local mostly-legal goblin.",
     "Hey. If you see a loose coin, that's mine.", "Morning, evening, whatever it is. Hi."
 ]
 
@@ -663,7 +663,7 @@ EXCITED_REPLIES = [
 
 PING_REPLIES = [
     "Yeah?", "Oh. Me?", "I'm here. Behind the sack.", "What's up?",
-    "Hang on, I dropped a coin.", "You called the goblin girl?", "Yep. Still around."
+    "Hang on, I dropped a coin.", "You called the goblin?", "Yep. Still around."
 ]
 
 OWNER_REFLECT_REPLIES = [
@@ -765,7 +765,7 @@ COMPLIMENT_REPLIES = [
     "Me? Aw. I just washed this shirt last month.", "Thanks. The nose is natural.",
     "That's kind of you. I don't hear that much outside pawn shops.", "Really? Huh. I'll remember this all week.",
     "You're pretty alright yourself.", "Thanks, friend. That's better than money. Slightly.",
-    "This goblin girl cleans up alright.", "Aw, quit it. Actually, one more is fine."
+    "This goblin cleans up alright.", "Aw, quit it. Actually, one more is fine."
 ]
 
 DEATH_REPLIES = [
@@ -783,7 +783,7 @@ MUSIC_REPLIES = [
 ]
 
 MONEY_REPLIES = [
-    "Money? Yeah, a girl's gotta make rent somehow.", "Coins are easier. Bills get crumpled in the sack.",
+    "Money? Yeah, a goblin's gotta make rent somehow.", "Coins are easier. Bills get crumpled in the sack.",
     "I'm saving up for a smaller sack.", "Casino money spends the same, assuming you keep it.",
     "If you're broke, `!beg` works. I won't make it weird.", "We could work. Not my first choice, but we could.",
     "I got financial plans. None survived contact with lunch.", "A dollar is just a hundred little opportunities."
@@ -1067,7 +1067,7 @@ ITEM_CATALOG = {
     },
     "collar": {
         "name": "Coin-Purse Strap", "kind": "collar", "weight": 5,
-        "price": 0.38, "description": "Let the goblin girl loop it onto you: +50% begging, extra company, and occasional command mix-ups today.",
+        "price": 0.38, "description": "Let the goblin loop it onto you: +50% begging, extra company, and occasional command mix-ups today.",
         "legendary_description": "Double begging and more frequent command mix-ups for three days.",
         "value": 0.50, "legendary_value": 1.00,
     },
@@ -1158,7 +1158,7 @@ OFFER_RESPONSES = {
     "tiny_scythe": ["Tiny rake! Barely useful, deeply charming.", "Keep it handy. We might find a very small yard."],
     "participation_trophy": ["Official cup issued. I wrote OFFICIAL twice.", "Good begging deserves proper equipment."],
     "black_ribbon": ["Useful shoelace. Here, lemme tie it without making a knot disaster.", "Both ends still got the plastic bits. Premium."],
-    "mori_plush": ["Little goblin plush! You keep it; my sack's too crowded.", "Set him somewhere nice. He looks like he's had a week."],
+    "mori_plush": ["Little goblin plush! You keep it; my sack's too crowded.", "Set the plush somewhere nice. It looks like it's had a week."],
     "cool_rock": ["That is a really good rock. You should carry it for both of us.", "Flat side, sparkly bit, good weight. Excellent rock."],
 }
 
@@ -1338,7 +1338,7 @@ async def shop(ctx):
     clean_inventory(account)
     offers = build_shop_offers(account["balance"])
 
-    lines = [f"**Goblin Girl's Blanket Shop — {pst_now().strftime('%I:%M %p PST')}**", "React with the number you want. Prices are based on your wallet and my rent situation.", ""]
+    lines = [f"**Goblin's Blanket Shop — {pst_now().strftime('%I:%M %p PST')}**", "React with the number you want. Prices are based on your wallet and my rent situation.", ""]
     for index, offer in enumerate(offers, start=1):
         data = ITEM_CATALOG[offer["id"]]
         title = f"LEGENDARY {data['name']}" if offer["legendary"] else data["name"]
@@ -1708,14 +1708,14 @@ TOO_POOR = [
     "Not enough money. Try `!work` over in **#casino** and build the pile back up.",
     "Your wallet came up short. **#casino** has `!work` if you need reliable coins.",
     "Can't cover that one yet. Head to **#casino**, use `!work`, then come back richer.",
-    "Balance says no. The goblin girl recommends earning a little in **#casino**.",
+    "Balance says no. The goblin recommends earning a little in **#casino**.",
     "Short on funds, friend. `!work` in **#casino** pays better than staring into my jar."
 ]
 
 CASINO_AD_LINES = [
     "Need coins? Visit **#casino** and try `!work`.",
     "While you're regrouping, **#casino** has roulette, blackjack, and honest little `!work` wages.",
-    "The goblin girl keeps the money-making commands over in **#casino**.",
+    "The goblin keeps the money-making commands over in **#casino**.",
     "A quick `!work` in **#casino** might fund the next attempt.",
     "Come by **#casino**—earn safely with `!work`, then lose it creatively if you want.",
     "Financial recovery plan: **#casino**, then `!work`, then maybe blackjack.",
@@ -1804,7 +1804,7 @@ async def on_message(message):
         save_accounts(accounts)
 
     # The jingling coin-purse strap can distract the goblin before command
-    # dispatch. Begging is always easy for her to recognize.
+    # dispatch. Begging is always easy for the goblin to recognize.
     if collars and message.content.startswith(bot.command_prefix):
         command_name = message.content[len(bot.command_prefix):].split(maxsplit=1)[0].lower()
         block_chance = 0.50 if collars[0].get("legendary") else (1 / 3)
@@ -1891,7 +1891,7 @@ async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
         problem = "I don't have that command written on the board. Might've been a typo."
     elif isinstance(error, commands.MissingRequiredArgument):
-        problem = f"That command is missing `{error.param.name}`. The goblin girl needs the whole form."
+        problem = f"That command is missing `{error.param.name}`. The goblin needs the whole form."
     elif isinstance(error, commands.BadArgument):
         problem = "I couldn't understand one of those command arguments. Check the amount or @mention and try again."
     elif isinstance(error, commands.UserInputError):
@@ -2584,14 +2584,14 @@ SPOUSE_GREETING_LINES = [
 # and somebody to help carry the sack—not ownership or a power struggle.
 MARRY_ACCEPT_LINES = [
     "Sure. Yeah, that sounds nice. Wanna split rent and snacks?",
-    "Marriage? Alright. This goblin girl already likes having you around.",
+    "Marriage? Alright. This goblin already likes having you around.",
     "Yeah, okay. We can make it official. I got a ring-shaped washer somewhere.",
     "I'd like that. Nothing fancy, though—paperwork and fries is plenty.",
     "Sure thing. Guess this is our sack now.",
     "Aw, really? Yeah. Absolutely. Lemme clean off the good washer.",
     "Sounds good to me. Partners in life and low-cost errands.",
     "Yeah, let's do it. I could use somebody to remind me where I put stuff.",
-    "I accept. Your new goblin wife hopes you're okay with a very modest honeymoon.",
+    "I accept. Your new goblin spouse hopes you're okay with a very modest honeymoon.",
     "Sure. You, me, and whatever loose change we find along the way."
 ]
 
@@ -2662,7 +2662,7 @@ SPOUSE_RANDOM_LINES = [
     "Glad we got married. Makes errands less boring.", "If you see my keys, they're technically our keys now.",
     "You good over there, spouse?", "I put your name on the snack shelf.",
     "Shared finances remain a terrifying concept, but I trust you.", "Come sit. I found a chair with most of its legs.",
-    "We're a decent little household, huh?", "Your goblin wife found a coupon. Date night might be back on."
+    "We're a decent little household, huh?", "Your goblin spouse found a coupon. Date night might be back on."
 ]
 
 SPOUSE_AFFECTION_LINES = [
@@ -2821,7 +2821,7 @@ async def divorce(ctx):
 async def bribe_divorce(ctx):
     current_spouse_id = get_current_spouse_id()
     if current_spouse_id is None:
-        await ctx.send(f"Nobody's married to the goblin girl right now, so keep your bribe money.\n{random.choice(CASINO_AD_LINES)}")
+        await ctx.send(f"Nobody's married to the goblin right now, so keep your bribe money.\n{random.choice(CASINO_AD_LINES)}")
         return
 
     charged, balance = charge_user(ctx.author, BRIBE_DIVORCE_COST)
@@ -2842,7 +2842,7 @@ async def bribe_divorce(ctx):
     former_spouse = spouse_member.mention if spouse_member else "the current spouse"
     await ctx.send(
         f"{ctx.author.mention} slides **${BRIBE_DIVORCE_COST:,}** across the blanket. "
-        f"The goblin girl checks both directions, pockets it, and dissolves her marriage to {former_spouse}.\n"
+        f"The goblin checks both directions, pockets it, and dissolves the marriage to {former_spouse}.\n"
         f"*Bribe paid. Balance: **${balance:,}**.*"
     )
 
